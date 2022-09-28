@@ -139,16 +139,11 @@
   become_user: "{{ ansible_user }}"
 
 # command is ended as error inspite of that it has done what it should, so added register and change option for rc
+# command sometimes behaves very strange | now is not rc return
 - name: "Bundle preparations 5 step install"
   ansible.builtin.bundler:
     executable: /home/{{ ansible_user }}/.rbenv/shims/bundle
     chdir: /home/{{ ansible_user }}/.rbenv/app/xpaste_practicum
-  ignore_errors: true
-  register: bundle_step5
-  changed_when: >
-    (bundle_step5.rc == 15) or
-    (bundle_step5.rc == 0) and
-    (bundle_step5.stderr == "")
   become_user: "{{ ansible_user }}"
 
 - name: "Set systemd unit lyalin"

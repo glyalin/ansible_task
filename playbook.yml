@@ -1,7 +1,7 @@
 ---
 # Preparing server CentOs 7 for ruby app renearroi
 
-# current user is vagrant and host is 192.168.211.194
+# current user is vagrant and host is 192.168.31.154
 - name: "Roles start process"
   hosts: test1
   become: true
