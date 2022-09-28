@@ -36,6 +36,7 @@
     update_cache: yes
     state: latest
 
+# for gems which require nodejs
 - name: "Install nodejs"
   ansible.builtin.yum:
     name: nodejs
@@ -53,9 +54,16 @@
     dest: /home/{{ ansible_user }}/.rbenv
   become_user: "{{ ansible_user }}"
 
-- name: "Add lines for lunch and install rbenv in .bashrc"
+- name: "Add file .profile in home folder"
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.profile
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0740
+
+- name: "Add lines for lunch and install rbenv in .profile"
   ansible.builtin.blockinfile:
-    path: "/home/{{ ansible_user }}/.bashrc"
+    path: "/home/{{ ansible_user }}/.profile"
     insertafter: "# User specific aliases and functions"
     block: |
         export PATH="$HOME/.rbenv/bin:$PATH"
@@ -68,9 +76,9 @@
     dest: /home/{{ ansible_user }}/.rbenv/plugins/ruby-build
   become_user: "{{ ansible_user }}"
 
-- name: "Reload .bash_profile"
+- name: "Reload .profile"
   ansible.builtin.shell:
-    cmd: source /home/{{ ansible_user }}/.bashrc
+    cmd: source /home/{{ ansible_user }}/.profile
   become_user: "{{ ansible_user }}"
 
 # Copy app to folder should be after git clone if otherwise it will be the error when playbook play
