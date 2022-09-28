@@ -1,0 +1,24 @@
+---
+# Preparing server CentOs 7 for ruby app renearroi
+
+- name: "Roles start process"
+  hosts: test1
+  become: true
+  vars:
+    app_name: lyalin
+
+# all preparing tasks and copy files for launch in roles, so here only one task to launch only app
+  roles:
+# for postgres used ansible's module: community.postgresql
+# role postgres should be before ruby because of libpq5-devel will not install in ruby role
+    - postgres
+# for nginx role galaxy role's colection was used
+    - nginx
+# for ruby used ansible's module: community.general
+    - ruby
+
+  tasks:
+  - name: "Start systemmd service to lunsh app renearroi"
+    service:
+      name: "{{ app_name }}"
+      state: started

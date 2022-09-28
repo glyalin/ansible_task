@@ -1,0 +1,51 @@
+---
+# tasks file for nginx
+
+- name: "Nginx prerequisites from galaxy role"
+  ansible.builtin.include_role:
+    name: nginxinc.nginx
+    tasks_from: prerequisites/prerequisites
+
+- name: "Nginx setup keys for nginx's repo from galaxy role"
+  ansible.builtin.include_role:
+    name: nginxinc.nginx
+    tasks_from: keys/setup-keys
+
+- name: "Install nginx"
+  ansible.builtin.include_role:
+    name: nginxinc.nginx
+    tasks_from: opensource/install-redhat
+
+- name: "Set config file for NGINX"
+  ansible.builtin.template:
+    src: nginx.j2
+    dest: /etc/nginx/conf.d/balance.conf
+
+- name: "Set adjusted lines for base nginx.conf - step1 addlines"
+  ansible.builtin.lineinfile:
+    path: "/etc/nginx/nginx.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+  - regexp: "worker_processes  auto;"
+    line: "worker_processes  1;"
+  - regexp: "error_log  /var/log/nginx/error.log notice;"
+    line: "error_log  /var/log/nginx/error.log warn;"
+
+- name: "Set adjusted line for base nginx.conf - step2 addblock"
+  ansible.builtin.blockinfile:
+    path: "/etc/nginx/nginx.conf"
+    insertafter: "error_log  /var/log/nginx/error.log warn;"
+    block:
+        include    /etc/nginx/modules-enabled/*.conf;
+
+- name: "Syntax check for balance.conf"
+  ansible.builtin.command: nginx -t
+  register: result_nginx
+
+- name: "Reload nginx service"
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  when: result_nginx.rc == 0  
+    

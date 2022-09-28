@@ -1,0 +1,92 @@
+---
+# Install and configure postgres
+  
+- name: "Install python3"
+  ansible.builtin.yum:
+    name: 
+      - python3
+    update_cache: yes
+    state: latest
+
+- name: "Download repository file rpm for postgresql"
+  ansible.builtin.get_url:
+    url: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    dest: /home/{{ ansible_user }}/pgdg-redhat-repo-latest.noarch.rpm
+  vars:
+    ansible_python_interpreter: /usr/bin/python3  
+    
+- name: "Install repository for postgresql"
+  ansible.builtin.yum:
+    name: /home/{{ ansible_user }}/pgdg-redhat-repo-latest.noarch.rpm
+    update_cache: yes
+    state: present
+  vars:
+    ansible_python_interpreter: /usr/bin/python3  
+    
+- name: "Install postgresql 12"
+  ansible.builtin.yum:
+    name: postgresql12-server
+    update_cache: yes
+    state: present
+
+# python3-psycopg2 package is added by pgdg-redhat-repo, so it's here
+
+- name: "Install python3-psycopg2"
+  ansible.builtin.yum:
+    name: 
+      - python3-psycopg2
+    update_cache: yes
+    state: latest
+
+- name: "Ensure PostgreSQL data directory exists."
+  file:
+    path: "{{ postgresql_data_dir }}"
+    owner: "{{ postgresql_user }}"
+    group: "{{ postgresql_group }}"
+    state: directory
+    mode: 0700
+
+- name: "Check if PostgreSQL database is initialized."
+  stat:
+    path: "{{ postgresql_data_dir }}/PG_VERSION"
+  register: pgdata_dir_version
+
+- name: "Postgresql DB initialization"
+  ansible.builtin.shell:
+    cmd: /usr/pgsql-12/bin/initdb -D /var/lib/pgsql/12/data/
+  when: not pgdata_dir_version.stat.exists
+  become_user: "{{ postgresql_user }}"
+  vars:
+    ansible_ssh_pipelining: true
+
+- name: "Ensure PostgreSQL data directory exists."
+  file:
+    path: "{{ postgresql_data_dir }}"
+    owner: "{{ postgresql_user }}"
+    group: "{{ postgresql_group }}"
+    state: directory
+    mode: 0700
+
+- name: "Start and enable postgresql 12"
+  ansible.builtin.service:
+    name: postgresql-12
+    state: started
+    enabled: yes
+
+- name: "Postgresql DB create for user lyalin"
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+    state: present
+  become_user: "{{ postgresql_user }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: "Postgresql create user lyalin"
+  community.postgresql.postgresql_user:
+    db: "{{ db_name }}"
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    role_attr_flags: CREATEDB,SUPERUSER
+  become_user: "{{ postgresql_user }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3

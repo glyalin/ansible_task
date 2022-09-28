@@ -1,0 +1,9 @@
+---
+# defaults file for postgres
+
+postgresql_user: postgres
+postgresql_group: postgres
+postgresql_data_dir: /var/lib/pgsql/12/data/
+db_name: lyalin
+db_user: lyalin
+db_password: ceec4eif7ya
